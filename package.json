@@ -1,0 +1,15 @@
+{
+  "name": "pr-review-bot",
+  "version": "1.0.0",
+  "description": "pr review bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "Alok Singh",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.6.5"
+  }
+}
