@@ -67,7 +67,20 @@ export const githubReview = inngest.createFunction(
         previous_filename: change.previous_filename,
       }));
     });
-
+    if(changes.length === 0) {
+      return {
+        message: "No changes found in the pull request",
+        skipped: true,
+        completed: false,
+      };
+    }
+    else {
+        await step.run("ai-review", async () => {
+            // Here you can implement the AI review logic using OpenAI or Gemini API
+            // For example, you can send the changes to the AI model and get a review response
+            // Then you can post the review comments back to GitHub using octokit
+        });
+    }
     return {
       message: "Pull request fetched successfully",
       skipped: false,
