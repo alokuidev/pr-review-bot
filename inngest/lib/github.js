@@ -3,6 +3,6 @@ import "dotenv/config";
 import { Octokit } from "@octokit/rest";
 
 export const octokit = new Octokit({
-  auth: process.env.OPENAI_API_KEY,
+  auth: process.env.GITHUB_PAT,
   userAgent: "inngest-github-review-bot",
 });
