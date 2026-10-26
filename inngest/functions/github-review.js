@@ -41,6 +41,7 @@ export const githubReview = inngest.createFunction(
           diff_url: data.diff_url,
           changes: data.changed_files,
           commits: data.commits,
+          head: data.head,
         };
       },
     );
@@ -69,7 +70,7 @@ export const githubReview = inngest.createFunction(
         previous_filename: change.previous_filename,
       }));
     });
-    if(changes.length === 0) {
+    if (changes.length === 0) {
       return {
         message: "No changes found in the pull request",
         skipped: true,
@@ -89,6 +90,31 @@ ${JSON.stringify(changes, null, 2)}`,
       return llmResponse.finalOutput;
     });
 
+    const postedReview = await step.run("post-review-comment", async () => {
+      const body = [
+        review.content,
+        review.criticalFixes?.length
+          ? `### Critical fixes\n${review.criticalFixes.map((fix) => `- ${fix}`).join("\n")}`
+          : "",
+        review.suggestions?.length
+          ? `### Suggestions\n${review.suggestions.map((suggestion) => `- ${suggestion}`).join("\n")}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const { data } = await octokit.pulls.createReview({
+        owner,
+        repo,
+        pull_number,
+        commit_id: pullRequestInfo.head.sha,
+        event: "COMMENT",
+        body,
+      });
+
+      return { id: data.id, state: data.state, html_url: data.html_url };
+    });
+
     return {
       message: "Pull request fetched successfully",
       skipped: false,
@@ -96,6 +122,7 @@ ${JSON.stringify(changes, null, 2)}`,
       pullRequest: pullRequestInfo,
       changes,
       review,
+      postedReview,
     };
   },
 );
