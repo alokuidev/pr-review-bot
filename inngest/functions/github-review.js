@@ -1,5 +1,7 @@
 import { inngest } from "../client.js";
 import { octokit } from "../lib/github.js";
+import { run } from "@openai/agents";
+import { githubPRReviewAgent } from "../../agents/github-pr-review.agent.js";
 /**
  * Event:{
  * data:{
@@ -74,19 +76,26 @@ export const githubReview = inngest.createFunction(
         completed: false,
       };
     }
-    else {
-        await step.run("ai-review", async () => {
-            // Here you can implement the AI review logic using OpenAI or Gemini API
-            // For example, you can send the changes to the AI model and get a review response
-            // Then you can post the review comments back to GitHub using octokit
-        });
-    }
+    const review = await step.run("ai-analyze", async () => {
+      const llmResponse = await run(
+        githubPRReviewAgent,
+        `Pull Request Information:
+${JSON.stringify(pullRequestInfo, null, 2)}
+
+Changes:
+${JSON.stringify(changes, null, 2)}`,
+      );
+
+      return llmResponse.finalOutput;
+    });
+
     return {
       message: "Pull request fetched successfully",
       skipped: false,
       completed: true,
       pullRequest: pullRequestInfo,
       changes,
+      review,
     };
   },
 );
